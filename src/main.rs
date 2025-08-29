@@ -24,6 +24,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let max_v_stack: usize = get_input("Maximum vertical stack:")?.parse()?;
   let spacing: i32 = get_input("Spacing between windows (pixels, negative for overlap):")?.parse()?;
 
+  println!("\nSpawning {} windows...", count);
+  for _ in 0..count {
+    if let Err(e) = Command::new(&program).spawn() {
+      eprintln!("{e}");
+    } else {
+      thread::sleep(Duration::from_millis(1500)); // Small delay to allow window to appear
+      println!("Spawned instance of {program}");
+    }
+  }
+
+  _ = get_input("Press enter if all Programs have been spawned!");
+  let handles = hwnds_for_exe(program.as_ref())?;
   // Get monitor information
   let monitor_info = get_monitor_info()?;
   let work_area = monitor_info.rcWork;
@@ -71,19 +83,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
       current_x += window_width + spacing; // Add spacing for horizontal
     }
   }
-
-  println!("\nSpawning {} windows...", positions.len());
-  for _ in &positions {
-    if let Err(e) = Command::new(&program).spawn() {
-      eprintln!("{e}");
-    } else {
-      thread::sleep(Duration::from_millis(1500)); // Small delay to allow window to appear
-      println!("Spawned instance of {program}");
-    }
-  }
-
-  _ = get_input("Press enter if all Programs have been spawned!");
-  let handles = hwnds_for_exe(program.as_ref())?;
 
   // Position windows
   println!("\nPositioning {} windows...", handles.len());
