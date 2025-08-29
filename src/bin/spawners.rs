@@ -1,5 +1,6 @@
-use crate::finder::hwnds_for_exe;
 use anyhow::Result;
+use spawners::finder::hwnds_for_exe;
+use spawners::get_input;
 use std::path::PathBuf;
 use std::process::Command;
 use std::thread;
@@ -8,8 +9,6 @@ use windows::Win32::Foundation::{HWND, POINT};
 use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, MONITOR_DEFAULTTONEAREST, MONITORINFO, MonitorFromWindow};
 use windows::Win32::System::Threading::Sleep;
 use windows::Win32::UI::WindowsAndMessaging::{GetCursorPos, GetForegroundWindow, MoveWindow, SW_RESTORE, ShowWindow};
-
-mod finder;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   let program = get_input("Enter program path to run (e.g., notepad.exe or C:\\Windows\\System32\\cmd.exe:")?;
@@ -100,17 +99,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   println!("Close the windows manually or press Enter to exit...");
   let _ = get_input("");
   Ok(())
-}
-
-fn get_input(prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
-  use std::io::{self, Write};
-
-  print!("{} ", prompt);
-  io::stdout().flush()?;
-
-  let mut input = String::new();
-  io::stdin().read_line(&mut input)?;
-  Ok(input.trim().to_string())
 }
 
 fn get_cursor_position() -> Result<POINT, Box<dyn std::error::Error>> {

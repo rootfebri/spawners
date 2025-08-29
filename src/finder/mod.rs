@@ -16,7 +16,7 @@ fn widestr_to_string(buf: &[u16]) -> String {
 }
 
 // Kumpulkan semua PID yang exe-nya == target_exe (case-insensitive, hanya nama file, bukan full path)
-fn pids_by_exe_name(target_exe: &str) -> windows::core::Result<HashSet<u32>> {
+pub fn pids_by_exe_name(target_exe: &str) -> windows::core::Result<HashSet<u32>> {
   unsafe {
     let snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)?;
     let mut entry = PROCESSENTRY32W::default();
@@ -30,7 +30,7 @@ fn pids_by_exe_name(target_exe: &str) -> windows::core::Result<HashSet<u32>> {
         if name.contains(target_exe) {
           pids.insert(entry.th32ProcessID);
         }
-        if !Process32NextW(snap, &mut entry).is_ok() {
+        if Process32NextW(snap, &mut entry).is_err() {
           break;
         }
       }
@@ -63,7 +63,7 @@ pub fn hwnds_for_exe(exe_name: &str) -> windows::core::Result<Vec<HWND>> {
   }
 
   thread_local! {
-      static COLLECT: RefCell<Vec<HWND>> = RefCell::new(Vec::new());
+      static COLLECT: RefCell<Vec<HWND>> = const { RefCell::new(Vec::new()) };
       static PIDS: RefCell<HashSet<u32>> = RefCell::new(HashSet::new());
   }
 

@@ -3,6 +3,14 @@ name = "spawners"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+path = "src/bin/pids.rs"
+name = "pids"
+
+[[bin]]
+path = "src/bin/spawners.rs"
+name = "spawners"
+
 [dependencies]
 windows = { version = "0.58", features = [
     "Win32_Foundation",
