@@ -61,14 +61,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
       h_count = 0;
       v_count += 1;
       current_x = start_pos.x;
-      current_y += window_height - spacing;
+      current_y += window_height; // No spacing for vertical - side by side
 
       if v_count >= max_v_stack {
         println!("Reached maximum vertical stack limit at {} windows", i + 1);
         break;
       }
     } else {
-      current_x += window_width - spacing;
+      current_x += window_width + spacing; // Add spacing for horizontal
     }
   }
 
