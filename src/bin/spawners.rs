@@ -1,8 +1,9 @@
 use anyhow::Result;
-use spawners::finder::hwnds_for_exe;
+use spawners::finder::{descendant_pids, hwnds_for_exe, hwnds_for_pids};
 use spawners::get_input;
 use std::path::PathBuf;
-use std::process::Command;
+use std::collections::HashSet;
+use std::process::{Child, Command};
 use std::thread;
 use std::time::Duration;
 use windows::Win32::Foundation::{HWND, POINT};
@@ -24,17 +25,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let spacing: i32 = get_input("Spacing between windows (pixels, negative for overlap):")?.parse()?;
 
   println!("\nSpawning {} windows...", count);
+  let mut children: Vec<Child> = Vec::with_capacity(count);
   for _ in 0..count {
-    if let Err(e) = Command::new(&program).spawn() {
-      eprintln!("{e}");
-    } else {
-      thread::sleep(Duration::from_millis(1500)); // Small delay to allow window to appear
-      println!("Spawned instance of {program}");
+    match Command::new(&program).spawn() {
+      Ok(child) => {
+        println!("Spawned instance of {program} (pid {})", child.id());
+        children.push(child);
+        thread::sleep(Duration::from_millis(300));
+      }
+      Err(e) => eprintln!("{e}"),
     }
   }
 
   _ = get_input("Press enter if all Programs have been spawned!");
-  let handles = hwnds_for_exe(program.as_ref())?;
+  // Gather candidate PIDs: direct children plus any descendants (some launchers re-spawn UI in another PID)
+  let root_pids: HashSet<u32> = children.iter().map(|c| c.id()).collect();
+  // brief settle time before snapshotting
+  thread::sleep(Duration::from_millis(1200));
+  let mut all_pids = root_pids.clone();
+  if let Ok(desc) = descendant_pids(&root_pids) {
+    all_pids.extend(desc);
+  }
+
+  // Prefer PID-based hwnd discovery; fallback to exe-name if none found
+  let mut handles = hwnds_for_pids(&all_pids)?;
+  if handles.is_empty() {
+    handles = hwnds_for_exe(program.as_ref())?;
+  }
   // Get monitor information
   let monitor_info = get_monitor_info()?;
   let work_area = monitor_info.rcWork;
