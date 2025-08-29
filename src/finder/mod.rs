@@ -92,3 +92,27 @@ pub fn hwnds_for_exe(exe_name: &str) -> windows::core::Result<Vec<HWND>> {
   let result = COLLECT.with(|cell| cell.borrow().clone());
   Ok(result)
 }
+
+pub fn get_process_name_by_pid(pid: u32) -> windows::core::Result<String> {
+  unsafe {
+    let snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)?;
+    let mut entry = PROCESSENTRY32W::default();
+    entry.dwSize = std::mem::size_of::<PROCESSENTRY32W>() as u32;
+
+    if Process32FirstW(snap, &mut entry).is_ok() {
+      loop {
+        if entry.th32ProcessID == pid {
+          let name = widestr_to_string(&entry.szExeFile);
+          return Ok(name);
+        }
+        if Process32NextW(snap, &mut entry).is_err() {
+          break;
+        }
+      }
+    }
+    Err(windows::core::Error::new(
+      windows::core::HRESULT(0),
+      "Process not found",
+    ))
+  }
+}

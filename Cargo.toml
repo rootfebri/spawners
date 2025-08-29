@@ -11,6 +11,10 @@ name = "pids"
 path = "src/bin/spawners.rs"
 name = "spawners"
 
+[[bin]]
+path = "src/bin/names.rs"
+name = "names"
+
 [dependencies]
 windows = { version = "0.58", features = [
     "Win32_Foundation",
