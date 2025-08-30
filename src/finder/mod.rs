@@ -9,7 +9,7 @@ use windows::Win32::UI::WindowsAndMessaging::GetWindowThreadProcessId;
 use windows::Win32::{
   Foundation::{BOOL, HWND, LPARAM},
   System::Diagnostics::ToolHelp::{
-  CreateToolhelp32Snapshot, PROCESSENTRY32W, Process32FirstW, Process32NextW, TH32CS_SNAPPROCESS,
+    CreateToolhelp32Snapshot, PROCESSENTRY32W, Process32FirstW, Process32NextW, TH32CS_SNAPPROCESS,
   },
   UI::WindowsAndMessaging::{
     EnumWindows, GA_ROOT, GWL_EXSTYLE, GetAncestor, GetWindowLongPtrW, IsWindowVisible, WS_EX_TOOLWINDOW,
@@ -190,7 +190,7 @@ pub fn get_process_name_by_pid(pid: u32) -> windows::core::Result<String> {
   unsafe {
     let snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)?;
     let mut entry = PROCESSENTRY32W::default();
-    entry.dwSize = std::mem::size_of::<PROCESSENTRY32W>() as u32;
+    entry.dwSize = size_of::<PROCESSENTRY32W>() as u32;
 
     if Process32FirstW(snap, &mut entry).is_ok() {
       loop {

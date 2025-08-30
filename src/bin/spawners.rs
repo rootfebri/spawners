@@ -1,15 +1,11 @@
-use anyhow::Result;
 use spawners::finder::{descendant_pids, hwnds_for_exe, hwnds_for_pids};
-use spawners::get_input;
-use std::path::PathBuf;
+use spawners::{get_cursor_position, get_input, get_monitor_info, position_window, validate_pos};
 use std::collections::HashSet;
+use std::path::PathBuf;
 use std::process::{Child, Command};
 use std::thread;
 use std::time::Duration;
-use windows::Win32::Foundation::{HWND, POINT};
-use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, MONITOR_DEFAULTTONEAREST, MONITORINFO, MonitorFromWindow};
 use windows::Win32::System::Threading::Sleep;
-use windows::Win32::UI::WindowsAndMessaging::{GetCursorPos, GetForegroundWindow, MoveWindow, SW_RESTORE, ShowWindow};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   let program = get_input("Enter program path to run (e.g., notepad.exe or C:\\Windows\\System32\\cmd.exe:")?;
@@ -61,14 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let _ = get_input("Press Enter when ready")?;
   let start_pos = get_cursor_position()?;
 
-  // Validate position is on screen
-  if start_pos.x < work_area.left
-    || start_pos.x > work_area.right
-    || start_pos.y < work_area.top
-    || start_pos.y > work_area.bottom
-  {
-    return Err("Starting position is outside the screen work area".into());
-  }
+  validate_pos(&start_pos, &work_area)?;
 
   // Calculate grid positions
   let window_width = 308; // Default window size
@@ -115,37 +104,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   println!("\nOperation completed! Spawned {} windows.", handles.len());
   println!("Close the windows manually or press Enter to exit...");
   let _ = get_input("");
-  Ok(())
-}
-
-fn get_cursor_position() -> Result<POINT, Box<dyn std::error::Error>> {
-  let mut point = POINT { x: 0, y: 0 };
-  unsafe {
-    GetCursorPos(&mut point)?;
-  }
-  Ok(point)
-}
-
-fn get_monitor_info() -> Result<MONITORINFO, Box<dyn std::error::Error>> {
-  let hwnd = unsafe { GetForegroundWindow() };
-  let hmonitor = unsafe { MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) };
-
-  let mut monitor_info = MONITORINFO {
-    cbSize: size_of::<MONITORINFO>() as u32,
-    ..Default::default()
-  };
-
-  unsafe {
-    GetMonitorInfoW(hmonitor, &mut monitor_info).ok()?;
-  }
-
-  Ok(monitor_info)
-}
-
-fn position_window(hwnd: HWND, x: i32, y: i32, width: i32, height: i32) -> Result<(), Box<dyn std::error::Error>> {
-  unsafe {
-    ShowWindow(hwnd, SW_RESTORE).ok()?;
-    MoveWindow(hwnd, x, y, width, height, true)?;
-  }
   Ok(())
 }
